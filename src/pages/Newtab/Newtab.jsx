@@ -284,7 +284,10 @@ export default class App extends React.Component {
   };
 
   updateTimer = () => {
-    this.setState({ end: DateTime.now().plus({ minutes: 30 }) });
+    chrome.storage.local.get('timer', (result) => {
+      const minutes = result?.timer !== undefined ? result.timer : 30;
+      this.setState({ end: DateTime.now().plus({ minutes }) });
+    });
   };
 
   render() {

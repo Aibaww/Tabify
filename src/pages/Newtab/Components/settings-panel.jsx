@@ -20,10 +20,67 @@ export default function SettingsPanel() {
   const [timezone, setTimezone] = React.useState(
     Intl.DateTimeFormat().resolvedOptions().timeZone
   );
-  const [timer, setTimer] = React.useState('');
+  const [timer, setTimer] = React.useState(30);
+
+  React.useEffect(() => {
+    chrome.storage.local.get(['name', 'timezone', 'timer'], (result) => {
+      if (result.name?.name !== undefined) {
+        setText(result.name.name);
+      }
+      if (result.timezone !== undefined) {
+        setTimezone(result.timezone);
+      }
+      if (result.timer !== undefined) {
+        setTimer(result.timer);
+      }
+    });
+  }, []);
+
+  const handleName = (event) => {
+    const name = event.target.value;
+    setText(name);
+    chrome.storage.local.set({ name: { name } });
+  };
+
+  const handleTimezone = (value) => {
+    setTimezone(value);
+    chrome.storage.local.set({ timezone: value });
+  };
 
   const handleTimer = (event) => {
-    setTimer(event.target.value);
+    const minutes = event.target.value;
+    setTimer(minutes);
+    chrome.storage.local.set({ timer: minutes });
+  };
+
+  const handleBackup = () => {
+    chrome.storage.local.get(null, (items) => {
+      const blob = new Blob([JSON.stringify(items, null, 2)], {
+        type: 'application/json',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `tabify-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+  };
+
+  const handleRestore = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const items = JSON.parse(reader.result);
+      chrome.storage.local.set(items, () => {
+        if (items.name?.name !== undefined) setText(items.name.name);
+        if (items.timezone !== undefined) setTimezone(items.timezone);
+        if (items.timer !== undefined) setTimer(items.timer);
+      });
+    };
+    reader.readAsText(file);
+    event.target.value = '';
   };
 
   return (
@@ -66,14 +123,12 @@ export default function SettingsPanel() {
                 size="small"
                 id="standard-helperText"
                 label="input your name"
-                onChange={(event) => {
-                  setText(event.target.value);
-                }}
+                onChange={handleName}
                 value={text}
               ></TextField>
             </ListItem>
             <ListItem>
-              <TimezoneSelect value={timezone} onChange={setTimezone} />
+              <TimezoneSelect value={timezone} onChange={handleTimezone} />
             </ListItem>
           </List>
         </Grid>
@@ -116,8 +171,8 @@ export default function SettingsPanel() {
                   onChange={handleTimer}
                 >
                   <MenuItem value={10}>10 minutes</MenuItem>
-                  <MenuItem value={20}>30 minutes</MenuItem>
-                  <MenuItem value={30}>1 hour</MenuItem>
+                  <MenuItem value={30}>30 minutes</MenuItem>
+                  <MenuItem value={60}>1 hour</MenuItem>
                 </Select>
               </FormControl>
             </ListItem>
@@ -133,9 +188,23 @@ export default function SettingsPanel() {
       >
         <Button
           variant="contained"
-          sx={{ backgroundColor: '#36454F', borderRadius: '10px' }}
+          sx={{ backgroundColor: '#36454F', borderRadius: '10px', marginRight: '10px' }}
+          onClick={handleBackup}
         >
           Backup
+        </Button>
+        <Button
+          variant="contained"
+          component="label"
+          sx={{ backgroundColor: '#36454F', borderRadius: '10px' }}
+        >
+          Restore
+          <input
+            type="file"
+            accept="application/json"
+            hidden
+            onChange={handleRestore}
+          />
         </Button>
       </Box>
     </Box>
