@@ -1,3 +1,16 @@
+.task-sort .MuiSelect-select{
+    color: white;
+    font-size: 12px;
+}
+
+.priority-dot{
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
 .task-box{
     height: 210px;
     overflow: hidden;

@@ -7,6 +7,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import Checkbox from './checkbox';
 import '../../Assets/tab-list.css';
 
+const PRIORITY_COLOR = { high: '#f44336', medium: '#ffb300', low: '#4caf50' };
+
 export default function TaskList(props) {
   return (
     <List className="list">
@@ -35,6 +37,13 @@ export default function TaskList(props) {
                   </div>
                 }
               >
+                <span
+                  className="priority-dot"
+                  style={{
+                    backgroundColor:
+                      PRIORITY_COLOR[taskItem.priority] || PRIORITY_COLOR.medium,
+                  }}
+                />
                 <ListItemText
                   primaryTypographyProps={{ fontSize: '16px' }}
                   primary={taskItem.text}
